@@ -27,7 +27,6 @@ public class CarsController {
         public ResponseEntity<List<CarResponseDTO>> addedCars() {
         log.info("Received request to get existing cars");
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic())
                 .body(carService.existCars());
     }
 

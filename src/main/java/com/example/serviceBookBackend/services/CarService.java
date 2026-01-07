@@ -4,9 +4,11 @@ import com.example.serviceBookBackend.dto.CarCreateDTO;
 import com.example.serviceBookBackend.dto.CarResponseDTO;
 import com.example.serviceBookBackend.entity.CarEntity;
 import com.example.serviceBookBackend.repository.CarRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
 public class CarService {
     private final CarRepository carRepository;
 
+    @Transactional
+    @CacheEvict(value = "carsList", allEntries = true)
     public void addCar(CarCreateDTO car) throws IOException {
         byte[] photoBytes = car.getPhoto() != null
                 ? car.getPhoto().getBytes()
@@ -50,8 +54,10 @@ public class CarService {
     @Cacheable(value = "carsList")
     public List<CarResponseDTO> existCars() {
         try {
+            log.info("Getting cars from database...");
             List<CarEntity> cars = carRepository.findAll();
 
+            log.info("Cars returned from database");
             return cars.stream().map(car -> {
                 CarResponseDTO dto = new CarResponseDTO();
                 dto.setId(car.getId());

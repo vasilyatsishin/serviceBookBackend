@@ -11,6 +11,6 @@ public class CacheConfig {
     @Bean
     public CacheManager cacheManager() {
         // Створюємо простий менеджер кешу в пам'яті
-        return new ConcurrentMapCacheManager("carPhotos", "carsList");
+        return new ConcurrentMapCacheManager();
     }
 }
