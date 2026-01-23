@@ -30,6 +30,13 @@ public class CarsController {
                 .body(carService.existCars());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<CarResponseDTO> getCarById(@PathVariable Integer id) {
+        log.info("Received request to get car by id");
+        return ResponseEntity.ok()
+                .body(carService.getCarById(id));
+    }
+
     @PostMapping(
             value = "/create",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE

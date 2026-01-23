@@ -1,29 +1,35 @@
 package com.example.serviceBookBackend.entity;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.sql.Blob;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "maintenance_jobs")
+@Table(name = "maintenance")
 @Getter
 @Setter
-public class MaintenanceJobEntity {
+public class PerformedMaintenanceEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column
-    private int frequency;
+    private int odometer;
 
     @Column
-    private String name;
+    private LocalDate date;
 
     @Column
-    private boolean isRegular;
+    private double price;
+
+    @Column
+    private String place;
+
+    @Column
+    private String comment;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "car", nullable = false)

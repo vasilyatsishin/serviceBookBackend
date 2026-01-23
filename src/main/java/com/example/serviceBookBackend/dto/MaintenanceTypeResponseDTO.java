@@ -8,4 +8,5 @@ public class MaintenanceTypeResponseDTO {
     private String name;
     private int frequency;
     private Integer carId;
+    private boolean isRegular;
 }

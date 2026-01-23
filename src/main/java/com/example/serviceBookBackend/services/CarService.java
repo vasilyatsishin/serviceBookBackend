@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,17 +25,17 @@ import java.util.stream.Collectors;
 public class CarService {
     private final CarRepository carRepository;
 
-    @Transactional
-    @CacheEvict(value = "carsList", allEntries = true)
+    @CacheEvict(
+            value = {"carsList", "carPhotos"},
+            allEntries = true
+    )
     public void addCar(CarCreateDTO car) throws IOException {
-        byte[] photoBytes = car.getPhoto() != null
-                ? car.getPhoto().getBytes()
-                : null;
+        if (car.getPhoto() == null) {
+            throw new RuntimeException("Фото обовʼязкове");
+        }
+        byte[] photoBytes = car.getPhoto() != null ? car.getPhoto().getBytes() : null;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        Thumbnails.of(new ByteArrayInputStream(photoBytes))
-                .size(800, 600)
-                .outputFormat("jpg")
-                .outputQuality(0.75) // 75% якості зазвичай достатньо
+        Thumbnails.of(new ByteArrayInputStream(photoBytes)).size(800, 600).outputFormat("jpg").outputQuality(0.75) // 75% якості зазвичай достатньо
                 .toOutputStream(outputStream);
 
         byte[] compressed = outputStream.toByteArray();
@@ -72,8 +73,30 @@ public class CarService {
         }
     }
 
+    @Cacheable(value = "carById", key = "#id")
+    public CarResponseDTO getCarById(Integer id) {
+        try {
+            log.info("Getting car from database...");
+            CarEntity car = carRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Автомобіль не знайдено"));
+
+
+            log.info("Car returned from database");
+            CarResponseDTO dto = new CarResponseDTO();
+            dto.setId(car.getId());
+            dto.setName(car.getName());
+            dto.setOdometer(car.getOdometer());
+            dto.setPhotoUrl("/api/cars/" + car.getId() + "/photo");
+            return dto;
+
+        } catch (RuntimeException e) {
+            log.error("Error while getting car by id", e);
+            throw new RuntimeException("Помилка отримання автомобіля");
+        }
+    }
+
     @Cacheable(value = "carPhotos", key = "#id")
-    public byte[] getPhoto(Integer id) throws IOException {
+    public byte[] getPhoto(Integer id) {
         try {
             return carRepository.getPhotoOnlyById(id);
         } catch (RuntimeException e) {

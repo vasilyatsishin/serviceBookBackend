@@ -2,7 +2,7 @@ package com.example.serviceBookBackend.controllers;
 
 import com.example.serviceBookBackend.dto.MaintenanceTypeCreateDTO;
 import com.example.serviceBookBackend.dto.MaintenanceTypeResponseDTO;
-import com.example.serviceBookBackend.entity.MaintenanceJobEntity;
+import com.example.serviceBookBackend.dto.view.NextMaintenanceView;
 import com.example.serviceBookBackend.services.MaintenanceTypeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,11 +26,11 @@ public class MaintenanceController {
                 .body(createdMaintenanceType);
     }
 
-    @GetMapping
-    public ResponseEntity<List<MaintenanceTypeResponseDTO>> getAllMaintenanceJobs(@RequestParam Integer carId) {
-        log.info("Received request to get maintenance type");
-        List<MaintenanceTypeResponseDTO> createdMaintenanceType = maintenanceTypeService.getMaintenanceTypesList(carId);
+    @GetMapping("/next-maintenance")
+    public ResponseEntity<List<NextMaintenanceView>> getAllNextMaintenanceJobs(@RequestParam Integer carId) {
+        log.info("Received request to get next maintenances");
+        List<NextMaintenanceView> nextMaintenancesList = maintenanceTypeService.getNextMaintenances(carId);
         return ResponseEntity.ok()
-                .body(createdMaintenanceType);
+                .body(nextMaintenancesList);
     }
 }

@@ -2,6 +2,7 @@ package com.example.serviceBookBackend.services;
 
 import com.example.serviceBookBackend.dto.MaintenanceTypeCreateDTO;
 import com.example.serviceBookBackend.dto.MaintenanceTypeResponseDTO;
+import com.example.serviceBookBackend.dto.view.NextMaintenanceView;
 import com.example.serviceBookBackend.entity.CarEntity;
 import com.example.serviceBookBackend.entity.MaintenanceJobEntity;
 import com.example.serviceBookBackend.repository.CarRepository;
@@ -11,8 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -24,7 +25,10 @@ public class MaintenanceTypeService {
     private final CarRepository carRepository;
 
     @Transactional
-    @CacheEvict(allEntries = true, value = "maintenanceTypesList")
+    @Caching(evict = {
+            @CacheEvict(value = "nextMaintenancesList", key = "#dto.carId"),
+            @CacheEvict(value = "carsList", allEntries = true)
+    })
     public String addMaintenanceType(MaintenanceTypeCreateDTO dto) {
         try {
             if (dto.isApplyToAllCars()) {
@@ -51,34 +55,25 @@ public class MaintenanceTypeService {
         }
     }
 
+    @Cacheable(value = "nextMaintenancesList", key = "#carId")
+    public List<NextMaintenanceView> getNextMaintenances(Integer carId) {
+        try {
+            List<NextMaintenanceView> nextMaintenances = maintenanceJobsRepository.findAllNextMaintenancesByCarId(carId);
+            log.info("Found and returned {} next maintenance jobs", nextMaintenances.size());
+            return nextMaintenances;
+        } catch (Exception e) {
+            log.error("Error while getting next maintenance jobs: {}", e.getMessage());
+            throw new RuntimeException("Помилка під час отримання списку типів обслуговування: " + e.getMessage());
+        }
+    }
+
     private MaintenanceJobEntity createEntity(CarEntity car, MaintenanceTypeCreateDTO dto) {
         MaintenanceJobEntity entity = new MaintenanceJobEntity();
         entity.setName(dto.getName());
         entity.setFrequency(dto.getInterval());
         entity.setCar(car);
+        entity.setRegular(dto.isRegular());
         return entity;
     }
 
-    @Cacheable(value = "maintenanceTypesList")
-    public List<MaintenanceTypeResponseDTO> getMaintenanceTypesList(Integer carId) {
-        try {
-            List<MaintenanceJobEntity> maintenanceJobs = maintenanceJobsRepository.findAllByCarId(carId);
-            log.info("Found and returned {} maintenance jobs", maintenanceJobs.size());
-            return maintenanceJobs.stream()
-                    .map(this::convertToDTO)
-                    .toList();
-        } catch (Exception e) {
-            log.error("Error while getting maintenance jobs list: {}", e.getMessage());
-            throw new RuntimeException("Помилка під час отримання списку типів обслуговування: " + e.getMessage());
-        }
-    }
-
-    private MaintenanceTypeResponseDTO convertToDTO(MaintenanceJobEntity entity) {
-        MaintenanceTypeResponseDTO dto = new MaintenanceTypeResponseDTO();
-        dto.setId(entity.getId());
-        dto.setName(entity.getName());
-        dto.setFrequency(entity.getFrequency());
-        dto.setCarId(entity.getCar().getId());
-        return dto;
-    }
 }

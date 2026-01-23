@@ -8,4 +8,5 @@ public class MaintenanceTypeCreateDTO {
     private int interval;
     private boolean applyToAllCars;
     private Integer carId;
+    private boolean regular;
 }
