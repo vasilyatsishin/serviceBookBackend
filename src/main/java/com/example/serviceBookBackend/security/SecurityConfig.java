@@ -14,20 +14,16 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-//    @Value("${CORS_ALLOWED_ORIGIN}")
-//    private String allowedOrigin;
+    @Value("${CORS_ALLOWED_ORIGIN}")
+    private String allowedOrigin;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> {})
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // <-- передаємо наш бін
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers("/**").permitAll()
                 );
 
         return http.build();
@@ -37,8 +33,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-//        configuration.setAllowedOrigins(List.of(allowedOrigin));
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOrigins(List.of(allowedOrigin));
 
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
