@@ -14,8 +14,8 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-//    @Value("${CORS_ALLOWED_ORIGIN}")
-//    private String allowedOrigin;
+    @Value("${CORS_ALLOWED_ORIGIN}")
+    private String allowedOrigin;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,8 +33,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-//        configuration.setAllowedOrigins(List.of(allowedOrigin));
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOrigins(List.of(allowedOrigin));
 
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
