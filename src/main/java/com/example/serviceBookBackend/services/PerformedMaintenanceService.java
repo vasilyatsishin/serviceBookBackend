@@ -41,7 +41,6 @@ public class PerformedMaintenanceService {
             CarEntity car = carRepository.findById(dto.getCarId())
                     .orElseThrow(() -> new RuntimeException("Автомобіль не знайдено"));
 
-            // 3. Створюємо основний запис
             PerformedMaintenanceEntity performedMaintenance = new PerformedMaintenanceEntity();
             performedMaintenance.setPlace(dto.getPlace());
             performedMaintenance.setOdometer(dto.getOdometer());
@@ -50,10 +49,8 @@ public class PerformedMaintenanceService {
             performedMaintenance.setComment(dto.getComment());
             performedMaintenance.setPrice(dto.getPrice());
 
-            // Зберігаємо і отримуємо об'єкт з уже присвоєним ID
             final PerformedMaintenanceEntity savedMaintenance = performedMaintenanceRepository.save(performedMaintenance);
 
-            // 4. Створюємо та зберігаємо лінки
             for (Integer jobId : dto.getPerformedMaintenance()) {
                 Optional<MaintenanceJobEntity> optionalJob = maintenanceJobsRepository.findById(jobId);
                 if (optionalJob.isEmpty()) {

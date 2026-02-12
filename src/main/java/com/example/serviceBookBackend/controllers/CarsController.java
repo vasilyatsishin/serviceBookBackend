@@ -23,24 +23,25 @@ import java.util.concurrent.TimeUnit;
 public class CarsController {
     private final CarService carService;
 
+    @PatchMapping("/update/odometer")
+    public ResponseEntity<String> odometerUpdate(@RequestParam Integer carId, @RequestParam Integer newOdometer) {
+        log.info("Received request to update odometer for car with id: {}", carId);
+        return ResponseEntity.ok().body(carService.updateOdometer(carId, newOdometer));
+    }
+
     @GetMapping("/exist-cars")
-        public ResponseEntity<List<CarResponseDTO>> addedCars() {
+    public ResponseEntity<List<CarResponseDTO>> addedCars() {
         log.info("Received request to get existing cars");
-        return ResponseEntity.ok()
-                .body(carService.existCars());
+        return ResponseEntity.ok().body(carService.existCars());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CarResponseDTO> getCarById(@PathVariable Integer id) {
         log.info("Received request to get car by id");
-        return ResponseEntity.ok()
-                .body(carService.getCarById(id));
+        return ResponseEntity.ok().body(carService.getCarById(id));
     }
 
-    @PostMapping(
-            value = "/create",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public void addCar(@ModelAttribute CarCreateDTO car) throws IOException {
         log.info("Received request to add car");
         carService.addCar(car);
@@ -52,9 +53,6 @@ public class CarsController {
         byte[] photo = carService.getPhoto(id);
         long duration = System.currentTimeMillis() - start;
         log.info("Час отримання фото з бази: {} ms", duration);
-        return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic())
-                .contentType(MediaType.IMAGE_JPEG)
-                .body(photo);
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic()).contentType(MediaType.IMAGE_JPEG).body(photo);
     }
 }

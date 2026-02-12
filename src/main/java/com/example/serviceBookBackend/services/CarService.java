@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -52,7 +54,10 @@ public class CarService {
         }
     }
 
-    @Cacheable(value = "carsList")
+    @CacheEvict(
+            value = {"carsList", "carB"},
+            allEntries = true
+    )
     public List<CarResponseDTO> existCars() {
         try {
             log.info("Getting cars from database...");
@@ -73,12 +78,28 @@ public class CarService {
         }
     }
 
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "carById", key = "#carId"),
+            @CacheEvict(value = "carsList", allEntries = true)
+    })
+    public String updateOdometer(Integer carId, Integer newOdometer) {
+        log.info("Updating odometer for car: {}", carId);
+
+        CarEntity car = carRepository.findById(carId)
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобіль не знайдено"));
+
+        car.setOdometer(newOdometer);
+
+        return "Пробіг оновлено успішно";
+    }
+
     @Cacheable(value = "carById", key = "#id")
     public CarResponseDTO getCarById(Integer id) {
         try {
             log.info("Getting car from database...");
             CarEntity car = carRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Автомобіль не знайдено"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Автомобіль не знайдено"));
 
 
             log.info("Car returned from database");
