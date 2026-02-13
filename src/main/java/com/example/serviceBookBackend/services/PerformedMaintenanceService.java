@@ -6,6 +6,7 @@ import com.example.serviceBookBackend.entity.CarEntity;
 import com.example.serviceBookBackend.entity.MaintenanceJobEntity;
 import com.example.serviceBookBackend.entity.PerformedMaintenanceEntity;
 import com.example.serviceBookBackend.entity.PerformedMaintenanceJobLink;
+import com.example.serviceBookBackend.constants.CacheKeys;
 import com.example.serviceBookBackend.repository.CarRepository;
 import com.example.serviceBookBackend.repository.MaintenanceJobsRepository;
 import com.example.serviceBookBackend.repository.PerformedMaintenanceJobLinkRepository;
@@ -14,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
@@ -30,10 +32,10 @@ public class PerformedMaintenanceService {
     private final PerformedMaintenanceJobLinkRepository linkRepository;
 
     @Caching(evict = {
-            @CacheEvict(value = "carById", key = "#dto.carId"),
-            @CacheEvict(value = "maintenanceList", key = "#dto.carId"),
-            @CacheEvict(value = "nextMaintenancesList", key = "#dto.carId"),
-            @CacheEvict(value = "carsList", allEntries = true)
+            @CacheEvict(value = CacheKeys.CAR_BY_ID, key = "#dto.carId"),
+            @CacheEvict(value = CacheKeys.MAINTENANCE_LIST, key = "#dto.carId"),
+            @CacheEvict(value = CacheKeys.NEXT_MAINTENANCES_LIST, key = "#dto.carId"),
+            @CacheEvict(value = CacheKeys.CARS_LIST, allEntries = true)
     })
     @Transactional
     public String addPerformedMaintenance(PerformedMaintenanceCreateDTO dto) {
@@ -76,6 +78,7 @@ public class PerformedMaintenanceService {
         }
     }
 
+    @Cacheable(value = CacheKeys.MAINTENANCE_LIST, key = "#carId")
     public List<PerformedMaintenancesResponseDTO> getPerformedMaintenances(int carId) {
         try {
             log.info("Getting performed maintenances for car: {}", carId);

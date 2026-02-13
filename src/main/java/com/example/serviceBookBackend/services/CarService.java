@@ -3,6 +3,7 @@ package com.example.serviceBookBackend.services;
 import com.example.serviceBookBackend.dto.CarCreateDTO;
 import com.example.serviceBookBackend.dto.CarResponseDTO;
 import com.example.serviceBookBackend.entity.CarEntity;
+import com.example.serviceBookBackend.constants.CacheKeys;
 import com.example.serviceBookBackend.repository.CarRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,7 +28,7 @@ public class CarService {
     private final CarRepository carRepository;
 
     @CacheEvict(
-            value = {"carsList", "carPhotos"},
+            value = {CacheKeys.CARS_LIST, CacheKeys.CAR_PHOTOS},
             allEntries = true
     )
     public void addCar(CarCreateDTO car) throws IOException {
@@ -54,10 +54,7 @@ public class CarService {
         }
     }
 
-    @CacheEvict(
-            value = {"carsList", "carB"},
-            allEntries = true
-    )
+    @Cacheable(value = CacheKeys.CARS_LIST)
     public List<CarResponseDTO> existCars() {
         try {
             log.info("Getting cars from database...");
@@ -80,8 +77,9 @@ public class CarService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "carById", key = "#carId"),
-            @CacheEvict(value = "carsList", allEntries = true)
+            @CacheEvict(value = CacheKeys.CAR_BY_ID, key = "#carId"),
+            @CacheEvict(value = CacheKeys.CARS_LIST, allEntries = true),
+            @CacheEvict(value = CacheKeys.NEXT_MAINTENANCES_LIST, key = "#carId"),
     })
     public String updateOdometer(Integer carId, Integer newOdometer) {
         log.info("Updating odometer for car: {}", carId);
@@ -94,7 +92,7 @@ public class CarService {
         return "Пробіг оновлено успішно";
     }
 
-    @Cacheable(value = "carById", key = "#id")
+    @Cacheable(value = CacheKeys.CAR_BY_ID, key = "#id")
     public CarResponseDTO getCarById(Integer id) {
         try {
             log.info("Getting car from database...");

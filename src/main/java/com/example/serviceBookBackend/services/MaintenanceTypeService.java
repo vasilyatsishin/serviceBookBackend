@@ -1,10 +1,10 @@
 package com.example.serviceBookBackend.services;
 
 import com.example.serviceBookBackend.dto.MaintenanceTypeCreateDTO;
-import com.example.serviceBookBackend.dto.MaintenanceTypeResponseDTO;
 import com.example.serviceBookBackend.dto.view.NextMaintenanceView;
 import com.example.serviceBookBackend.entity.CarEntity;
 import com.example.serviceBookBackend.entity.MaintenanceJobEntity;
+import com.example.serviceBookBackend.constants.CacheKeys;
 import com.example.serviceBookBackend.repository.CarRepository;
 import com.example.serviceBookBackend.repository.MaintenanceJobsRepository;
 import jakarta.transaction.Transactional;
@@ -26,8 +26,8 @@ public class MaintenanceTypeService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "nextMaintenancesList", key = "#dto.carId"),
-            @CacheEvict(value = "carsList", allEntries = true)
+            @CacheEvict(value = CacheKeys.NEXT_MAINTENANCES_LIST, key = "#dto.carId"),
+            @CacheEvict(value = CacheKeys.CARS_LIST, allEntries = true)
     })
     public String addMaintenanceType(MaintenanceTypeCreateDTO dto) {
         try {
@@ -55,7 +55,7 @@ public class MaintenanceTypeService {
         }
     }
 
-    @Cacheable(value = "nextMaintenancesList", key = "#carId")
+    @Cacheable(value = CacheKeys.NEXT_MAINTENANCES_LIST, key = "#carId")
     public List<NextMaintenanceView> getNextMaintenances(Integer carId) {
         try {
             List<NextMaintenanceView> nextMaintenances = maintenanceJobsRepository.findAllNextMaintenancesByCarId(carId);
