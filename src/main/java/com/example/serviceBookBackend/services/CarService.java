@@ -4,6 +4,7 @@ import com.example.serviceBookBackend.dto.CarCreateDTO;
 import com.example.serviceBookBackend.dto.CarResponseDTO;
 import com.example.serviceBookBackend.entity.CarEntity;
 import com.example.serviceBookBackend.constants.CacheKeys;
+import com.example.serviceBookBackend.exceptions.CustomException;
 import com.example.serviceBookBackend.repository.CarRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -87,8 +89,15 @@ public class CarService {
         CarEntity car = carRepository.findById(carId)
                 .orElseThrow(() -> new ResourceNotFoundException("Автомобіль не знайдено"));
 
+        if (newOdometer < car.getOdometer()) {
+            throw new CustomException(
+                    "Новий пробіг не може бути меншим за поточний",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
         car.setOdometer(newOdometer);
 
+        log.info("Odometer for car: {} updated successfully", carId);
         return "Пробіг оновлено успішно";
     }
 
