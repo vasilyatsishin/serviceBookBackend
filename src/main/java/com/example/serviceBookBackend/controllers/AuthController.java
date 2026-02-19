@@ -1,5 +1,6 @@
 package com.example.serviceBookBackend.controllers;
 
+import com.example.serviceBookBackend.dto.JWTResponseDTO;
 import com.example.serviceBookBackend.dto.RegisterUserDTO;
 import com.example.serviceBookBackend.services.AuthService;
 import jakarta.validation.Valid;
@@ -18,8 +19,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public void login(@Valid @RequestBody RegisterUserDTO user) {
+    public JWTResponseDTO login(@Valid @RequestBody RegisterUserDTO user) {
         log.info("Received request to register user: {}", user.getEmail());
-        authService.register(user);
+        return authService.register(user);
     }
 }

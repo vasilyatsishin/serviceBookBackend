@@ -31,13 +31,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, msg);
     }
 
-    // 3. ВСЕ ІНШЕ (той самий "піздєц", який ти не передбачив)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleAllExceptions(Exception ex) {
-        log.error("UNEXPECTED SERVER ERROR: ", ex); // Логуємо реальну помилку, щоб ти міг її пофіксити
+        log.error("UNEXPECTED SERVER ERROR: ", ex);
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "На сервері стався піздєц. Спробуйте пізніше."
+                "500 - Внутрішня помилка сервера"
         );
     }
 
