@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -36,26 +37,29 @@ public class JWTService {
         SIGN_KEY = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
-    public String generateAccessToken(String username) {
+    public String generateAccessToken(Integer userId) {
         Instant now = Instant.now();
         Instant expiration = now.plus(15, ChronoUnit.MINUTES);
 
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(String.valueOf(userId)) // ← ВАЖЛИВО
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiration))
                 .signWith(SIGN_KEY)
                 .compact();
     }
 
-    public String extractUsername(String token) {
+    public Integer extractUserId(String token) {
         try {
-            return Jwts.parserBuilder()
+            String subject = Jwts.parserBuilder()
                     .setSigningKey(SIGN_KEY)
                     .build()
                     .parseClaimsJws(token)
                     .getBody()
                     .getSubject();
+
+            return Integer.parseInt(subject);
+
         } catch (ExpiredJwtException e) {
             log.warn("Token expired: {}", e.getMessage());
             return null;
@@ -65,12 +69,30 @@ public class JWTService {
     }
 
     public boolean isTokenValid(String token, UserEntity userDetails) {
-        try {
-            final String username = extractUsername(token);
-            // Якщо extractUsername повернув null (через ExpiredJwtException), то токен невалідний
-            return (username != null && username.equals(userDetails.getEmail()));
-        } catch (Exception e) {
-            return false;
+        Integer userId = extractUserId(token);
+
+        return userId != null && userId.equals(userDetails.getId());
+    }
+
+    public Integer getCurrentUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new CustomException("Unauthorized", HttpStatus.UNAUTHORIZED);
         }
+
+        Object principal = auth.getPrincipal();
+
+        if (principal instanceof Integer) {
+            return (Integer) principal;
+        } else if (principal instanceof String) {
+            try {
+                return Integer.parseInt((String) principal);
+            } catch (NumberFormatException e) {
+                throw new CustomException("Invalid token principal", HttpStatus.UNAUTHORIZED);
+            }
+        }
+
+        throw new CustomException("Unauthorized", HttpStatus.UNAUTHORIZED);
     }
 }

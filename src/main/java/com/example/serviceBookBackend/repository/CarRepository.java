@@ -7,8 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface CarRepository extends JpaRepository<CarEntity, Integer> {
     @Query("SELECT c.photo FROM CarEntity c WHERE c.id = :id")
     byte[] getPhotoOnlyById(@Param("id") Integer id);
+
+    List<CarEntity> findAllByUserId(Integer userId);
 }

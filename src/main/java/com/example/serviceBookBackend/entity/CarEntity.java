@@ -24,4 +24,8 @@ public class CarEntity {
 
     @Lob
     private byte[] photo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 }

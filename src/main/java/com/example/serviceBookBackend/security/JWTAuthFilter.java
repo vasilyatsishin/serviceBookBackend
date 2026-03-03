@@ -38,29 +38,30 @@ public class JWTAuthFilter extends OncePerRequestFilter {
         }
 
         String jwt = authHeader.substring(7);
-        String userEmail = jwtService.extractUsername(jwt); // Треба додати такий метод у JWTService
+        Integer userId = jwtService.extractUserId(jwt);
 
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // 1. Шукаємо юзера безпечно через Optional
-            var userOptional = userRepository.findByEmail(userEmail);
+        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if (userOptional.isPresent()) {
-                UserEntity userDetails = userOptional.get();
+            // Перевіряємо, чи токен валідний
+            UserEntity user = userRepository.findById(userId)
+                    .orElseThrow(() -> new CustomException("Користувача не знайдено", HttpStatus.UNAUTHORIZED));
 
-                // 2. Перевіряємо, чи токен валідний саме для цього юзера
-                if (jwtService.isTokenValid(jwt, userDetails)) {
-                    // 3. Створюємо токен автентифікації
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, List.of() // Беремо ролі з сутності
-                    );
+            if (jwtService.isTokenValid(jwt, user)) {
 
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                // 🔹 Кладемо userId як principal
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                user.getId(),  // 👈 тут тільки ID
+                                null,
+                                List.of()      // ролі
+                        );
 
-                    // 4. Записуємо в контекст Spring Security
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
-// 5. Обов'язково йдемо далі по ланцюжку фільтрів
+
         filterChain.doFilter(request, response);
     }
 }

@@ -7,8 +7,8 @@ CREATE TABLE users
 );
 
 ALTER TABLE cars
-    ADD user INT,
+    ADD user_id INT,
     ADD CONSTRAINT fk_cars_user
-        FOREIGN KEY (user)
+        FOREIGN KEY (user_id)
             REFERENCES users (id);
 
