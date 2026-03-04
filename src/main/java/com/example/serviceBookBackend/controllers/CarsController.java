@@ -53,6 +53,6 @@ public class CarsController {
         byte[] photo = carService.getPhoto(id);
         long duration = System.currentTimeMillis() - start;
         log.info("Час отримання фото з бази: {} ms", duration);
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic()).contentType(MediaType.IMAGE_JPEG).body(photo);
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(photo);
     }
 }

@@ -35,7 +35,8 @@ public class SecurityConfig {
                 )
                 // 1. ПРАВИЛА ДОСТУПУ (ОБОВ'ЯЗКОВО!)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Відкриті ендпоінти
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/cars/*/photo").permitAll()// Відкриті ендпоінти
                         .anyRequest().authenticated()               // Все інше - ТІЛЬКИ з токеном
                 )
                 // 2. ТвійEntryPoint для 401

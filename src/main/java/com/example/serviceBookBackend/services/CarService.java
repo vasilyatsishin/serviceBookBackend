@@ -78,6 +78,7 @@ public class CarService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = CacheKeys.CAR_BY_ID, key = "#carId"),
+            @CacheEvict(value = CacheKeys.CAR_PHOTOS, key = "#carId"),
             @CacheEvict(value = CacheKeys.CARS_LIST, key = "#root.target.currentUserId"),
             @CacheEvict(value = CacheKeys.NEXT_MAINTENANCES_LIST, key = "#carId"),
     })
