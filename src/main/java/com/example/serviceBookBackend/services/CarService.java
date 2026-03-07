@@ -63,6 +63,38 @@ public class CarService {
         log.info("Car added for user: {}", userId);
     }
 
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheKeys.CAR_BY_ID, key = "#car.id"),
+            @CacheEvict(value = CacheKeys.CAR_PHOTOS, key = "#car.id"),
+            @CacheEvict(value = CacheKeys.CARS_LIST, key = "#root.target.currentUserId"),
+    })
+    public String updateCar(CarCreateDTO car) throws IOException {
+        Integer userId = jWTService.getCurrentUserId();
+
+        CarEntity carEntity = carRepository.findById(car.getId())
+                .orElseThrow(() -> new RuntimeException("Авто не знайдено"));
+
+        carEntity.setId(car.getId());
+        carEntity.setName(car.getName());
+        carEntity.setOdometer(car.getOdometer());
+
+        if (car.getPhoto() != null) {
+            byte[] photoBytes = car.getPhoto().getBytes();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Thumbnails.of(new ByteArrayInputStream(photoBytes))
+                    .size(800, 600)
+                    .outputFormat("jpg")
+                    .outputQuality(0.75)
+                    .toOutputStream(outputStream);
+            carEntity.setPhoto(outputStream.toByteArray());
+        }
+
+        carRepository.save(carEntity);
+        log.info("Car updated for user: {}", userId);
+        return "Дані про авто успішно оновлено";
+    }
+
     // Кеш тепер розділений по userId
     @Cacheable(value = CacheKeys.CARS_LIST, key = "#root.target.currentUserId")
     public List<CarResponseDTO> existCars() {
@@ -98,7 +130,35 @@ public class CarService {
         }
 
         car.setOdometer(newOdometer);
+
+        log.info("Odometer for car {} successfully updated", carId);
+
         return "Пробіг оновлено";
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheKeys.CAR_BY_ID, key = "#carId"),
+            @CacheEvict(value = CacheKeys.CAR_PHOTOS, key = "#carId"),
+            @CacheEvict(value = CacheKeys.CARS_LIST, key = "#root.target.currentUserId"),
+            @CacheEvict(value = CacheKeys.NEXT_MAINTENANCES_LIST, key = "#carId"),
+    })
+    public String deleteCar(Integer carId) {
+        Integer userId = jWTService.getCurrentUserId();
+
+        // Знаходимо машину і перевіряємо власника
+        CarEntity car = carRepository.findById(carId)
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобіль не знайдено"));
+
+        if (!car.getUser().getId().equals(userId)) {
+            throw new CustomException("Доступ заборонено", HttpStatus.FORBIDDEN);
+        }
+
+        carRepository.delete(car);
+
+        log.info("Car {} successfully deleted from DB", carId);
+
+        return "Автомобіль успішно видалено";
     }
 
     @Cacheable(value = CacheKeys.CAR_BY_ID, key = "#id")

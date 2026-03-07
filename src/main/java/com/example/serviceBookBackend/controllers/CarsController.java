@@ -55,4 +55,17 @@ public class CarsController {
         log.info("Час отримання фото з бази: {} ms", duration);
         return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(photo);
     }
+
+    @DeleteMapping("/delete/{carId}")
+    public String deleteCar(@PathVariable Integer carId) throws IOException {
+        log.info("Received request to delete car: {}", carId);
+        return carService.deleteCar(carId);
+    }
+
+    @PutMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String updateCar(@ModelAttribute CarCreateDTO car) throws IOException {
+        log.info("Received request to update car: {}", car.getId());
+        return carService.updateCar(car);
+    }
+
 }

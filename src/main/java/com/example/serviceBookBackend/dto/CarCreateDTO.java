@@ -7,6 +7,7 @@ import java.sql.Blob;
 
 @Data
 public class CarCreateDTO {
+    private Integer id;
     private String name;
     private int odometer;
     private MultipartFile photo;
