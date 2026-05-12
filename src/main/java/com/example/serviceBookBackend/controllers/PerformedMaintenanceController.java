@@ -32,4 +32,11 @@ public class PerformedMaintenanceController {
         return ResponseEntity.ok()
                 .body(performedMaintenances);
     }
+
+    @PostMapping("/{maintenanceId}/pay")
+    public ResponseEntity<String> payMaintenance(@PathVariable Integer maintenanceId,
+                                                  @RequestParam Integer carId) {
+        log.info("Received payment request for maintenance {}", maintenanceId);
+        return ResponseEntity.ok(performedMaintenanceService.payMaintenance(maintenanceId, carId));
+    }
 }

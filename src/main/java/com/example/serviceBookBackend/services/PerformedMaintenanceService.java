@@ -3,24 +3,25 @@ package com.example.serviceBookBackend.services;
 import com.example.serviceBookBackend.dto.PerformedMaintenanceCreateDTO;
 import com.example.serviceBookBackend.dto.PerformedMaintenancesResponseDTO;
 import com.example.serviceBookBackend.entity.CarEntity;
-import com.example.serviceBookBackend.entity.MaintenanceJobEntity;
 import com.example.serviceBookBackend.entity.PerformedMaintenanceEntity;
 import com.example.serviceBookBackend.entity.PerformedMaintenanceJobLink;
+import com.example.serviceBookBackend.entity.ServiceCatalogEntity;
 import com.example.serviceBookBackend.constants.CacheKeys;
+import com.example.serviceBookBackend.exceptions.CustomException;
 import com.example.serviceBookBackend.repository.CarRepository;
-import com.example.serviceBookBackend.repository.MaintenanceJobsRepository;
 import com.example.serviceBookBackend.repository.PerformedMaintenanceJobLinkRepository;
 import com.example.serviceBookBackend.repository.PerformedMaintenanceRepository;
+import com.example.serviceBookBackend.repository.ServiceCatalogRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -28,7 +29,7 @@ import java.util.Optional;
 public class PerformedMaintenanceService {
     private final PerformedMaintenanceRepository performedMaintenanceRepository;
     private final CarRepository carRepository;
-    private final MaintenanceJobsRepository maintenanceJobsRepository;
+    private final ServiceCatalogRepository serviceCatalogRepository;
     private final PerformedMaintenanceJobLinkRepository linkRepository;
 
     @Caching(evict = {
@@ -53,18 +54,18 @@ public class PerformedMaintenanceService {
 
             final PerformedMaintenanceEntity savedMaintenance = performedMaintenanceRepository.save(performedMaintenance);
 
-            for (Integer jobId : dto.getPerformedMaintenance()) {
-                Optional<MaintenanceJobEntity> optionalJob = maintenanceJobsRepository.findById(jobId);
-                if (optionalJob.isEmpty()) {
-                    throw new RuntimeException("Не знайдено тип обслуговування з id=" + jobId);
-                }
-                MaintenanceJobEntity jobEntity = optionalJob.get();
-                log.info("Saving link: maintenanceId={}, jobId={}", savedMaintenance.getId(), jobEntity.getId());
+            if (dto.getPerformedCatalogIds() != null) {
+                for (Integer catalogId : dto.getPerformedCatalogIds()) {
+                    ServiceCatalogEntity catalogItem = serviceCatalogRepository.findById(catalogId)
+                            .orElseThrow(() -> new RuntimeException("Не знайдено послугу з id=" + catalogId));
 
-                PerformedMaintenanceJobLink link = new PerformedMaintenanceJobLink();
-                link.setMaintenanceJobEntity(jobEntity);
-                link.setPerformedMaintenanceEntity(savedMaintenance);
-                linkRepository.save(link);
+                    log.info("Saving catalog link: maintenanceId={}, catalogId={}", savedMaintenance.getId(), catalogId);
+
+                    PerformedMaintenanceJobLink link = new PerformedMaintenanceJobLink();
+                    link.setCatalogEntity(catalogItem);
+                    link.setPerformedMaintenanceEntity(savedMaintenance);
+                    linkRepository.save(link);
+                }
             }
 
             car.setOdometer(dto.getOdometer());
@@ -76,6 +77,22 @@ public class PerformedMaintenanceService {
             log.error("Error while creating new maintenance: {}", e.getMessage());
             throw new RuntimeException("Помилка під час створення запису: " + e.getMessage());
         }
+    }
+
+    @Transactional
+    @CacheEvict(value = CacheKeys.MAINTENANCE_LIST, key = "#carId")
+    public String payMaintenance(Integer maintenanceId, Integer carId) {
+        PerformedMaintenanceEntity entity = performedMaintenanceRepository.findById(maintenanceId)
+                .orElseThrow(() -> new CustomException("Запис обслуговування не знайдено", HttpStatus.NOT_FOUND));
+
+        if (entity.isPaid()) {
+            throw new CustomException("Послуга вже оплачена", HttpStatus.BAD_REQUEST);
+        }
+
+        entity.setPaid(true);
+        performedMaintenanceRepository.save(entity);
+        log.info("Maintenance {} marked as paid", maintenanceId);
+        return "Оплату успішно здійснено";
     }
 
     @Cacheable(value = CacheKeys.MAINTENANCE_LIST, key = "#carId")
@@ -91,6 +108,7 @@ public class PerformedMaintenanceService {
                 dto.setPlace(performedMaintenance.getPlace());
                 dto.setOdometer(performedMaintenance.getOdometer());
                 dto.setDate(performedMaintenance.getDate());
+                dto.setPaid(performedMaintenance.isPaid());
                 return dto;
             }).toList();
             log.info("Returned {} maintenances for car: {}", performedMaintenancesResponseDTOS.size(), carId);

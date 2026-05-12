@@ -31,6 +31,9 @@ public class PerformedMaintenanceEntity {
     @Column
     private String comment;
 
+    @Column(name = "is_paid", nullable = false)
+    private boolean isPaid = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "car", nullable = false)
     private CarEntity car;

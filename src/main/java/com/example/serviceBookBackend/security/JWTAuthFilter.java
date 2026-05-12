@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 @Component
 @RequiredArgsConstructor
 public class JWTAuthFilter extends OncePerRequestFilter {
@@ -48,12 +50,16 @@ public class JWTAuthFilter extends OncePerRequestFilter {
 
             if (jwtService.isTokenValid(jwt, user)) {
 
-                // 🔹 Кладемо userId як principal
+                String role = jwtService.extractRole(jwt);
+                var authorities = role != null
+                        ? List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                        : List.<SimpleGrantedAuthority>of();
+
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
-                                user.getId(),  // 👈 тут тільки ID
+                                user.getId(),
                                 null,
-                                List.of()      // ролі
+                                authorities
                         );
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

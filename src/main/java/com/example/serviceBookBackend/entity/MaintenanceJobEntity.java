@@ -28,5 +28,9 @@ public class MaintenanceJobEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "car", nullable = false)
     private CarEntity car;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "catalog_id")
+    private ServiceCatalogEntity catalogEntity;
 }
 

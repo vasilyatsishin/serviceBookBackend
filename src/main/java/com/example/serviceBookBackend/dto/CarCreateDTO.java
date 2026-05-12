@@ -11,5 +11,6 @@ public class CarCreateDTO {
     private String name;
     private int odometer;
     private MultipartFile photo;
+    private Integer ownerId;
 }
 

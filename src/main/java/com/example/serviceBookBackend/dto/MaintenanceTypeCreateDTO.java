@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class MaintenanceTypeCreateDTO {
-    private String name;
+    private Integer catalogId;
     private int interval;
     private boolean applyToAllCars;
     private Integer carId;

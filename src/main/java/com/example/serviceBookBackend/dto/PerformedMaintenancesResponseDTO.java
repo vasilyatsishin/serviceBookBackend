@@ -1,5 +1,6 @@
 package com.example.serviceBookBackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -12,4 +13,6 @@ public class PerformedMaintenancesResponseDTO {
     private double price;
     private String comment;
     private int id;
+    @JsonProperty("isPaid")
+    private boolean isPaid;
 }

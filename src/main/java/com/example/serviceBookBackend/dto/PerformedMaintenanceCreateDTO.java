@@ -13,5 +13,5 @@ public class PerformedMaintenanceCreateDTO {
     private Integer carId;
     private String place;
     private String comment;
-    private List<Integer> performedMaintenance;
+    private List<Integer> performedCatalogIds;
 }

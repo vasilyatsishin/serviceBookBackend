@@ -29,6 +29,12 @@ public class CarsController {
         return ResponseEntity.ok().body(carService.updateOdometer(carId, newOdometer));
     }
 
+    @GetMapping("/all-cars")
+    public ResponseEntity<List<CarResponseDTO>> allCars() {
+        log.info("Received request to get all cars (service role)");
+        return ResponseEntity.ok().body(carService.getAllCars());
+    }
+
     @GetMapping("/exist-cars")
     public ResponseEntity<List<CarResponseDTO>> addedCars() {
         log.info("Received request to get existing cars");

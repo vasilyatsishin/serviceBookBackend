@@ -8,4 +8,6 @@ public class CarResponseDTO {
     private String name;
     private int odometer;
     private String photoUrl;
+    private String ownerName;
+    private Integer ownerId;
 }

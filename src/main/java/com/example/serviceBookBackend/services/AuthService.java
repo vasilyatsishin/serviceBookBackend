@@ -45,7 +45,7 @@ public class AuthService {
         newUser.setPassword(encodedPassword);
         userRepository.save(newUser);
 
-        String access = jwtService.generateAccessToken(newUser.getId());
+        String access = jwtService.generateAccessToken(newUser.getId(), newUser.getRole());
         String refresh = UUID.randomUUID().toString();
 
         JWTResponseDTO tokens = new JWTResponseDTO();
@@ -82,7 +82,7 @@ public class AuthService {
         }
 
         // 4. Генеруємо новий Access токен
-        return jwtService.generateAccessToken(user.getId());
+        return jwtService.generateAccessToken(user.getId(),user.getRole());
     }
 
     @Transactional
@@ -96,7 +96,7 @@ public class AuthService {
         }
 
         // 3. Генеруємо токени
-        String access = jwtService.generateAccessToken(user.getId());
+        String access = jwtService.generateAccessToken(user.getId(), user.getRole());
         String refresh = UUID.randomUUID().toString(); // Твій новий підхід з UUID
 
         // 4. Оновлюємо або створюємо запис у таблиці токенів

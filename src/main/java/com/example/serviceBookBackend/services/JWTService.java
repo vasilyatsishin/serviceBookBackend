@@ -14,14 +14,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import org.springframework.security.core.GrantedAuthority;
 
 import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -37,12 +37,36 @@ public class JWTService {
         SIGN_KEY = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
-    public String generateAccessToken(Integer userId) {
+    public String extractRole(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(SIGN_KEY)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("role", String.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String getCurrentUserRole() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return null;
+        return auth.getAuthorities().stream()
+                .findFirst()
+                .map(GrantedAuthority::getAuthority)
+                .map(a -> a.replace("ROLE_", "").toLowerCase())
+                .orElse(null);
+    }
+
+    public String generateAccessToken(Integer userId, String role) {
         Instant now = Instant.now();
         Instant expiration = now.plus(15, ChronoUnit.MINUTES);
 
         return Jwts.builder()
                 .setSubject(String.valueOf(userId)) // ← ВАЖЛИВО
+                .claim("role", role)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiration))
                 .signWith(SIGN_KEY)

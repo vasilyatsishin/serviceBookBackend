@@ -18,6 +18,10 @@ public class PerformedMaintenanceJobLink {
     private PerformedMaintenanceEntity performedMaintenanceEntity;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "maintenance_job_id", nullable = false)
+    @JoinColumn(name = "maintenance_job_id")
     private MaintenanceJobEntity maintenanceJobEntity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "catalog_id")
+    private ServiceCatalogEntity catalogEntity;
 }

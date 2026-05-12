@@ -24,10 +24,12 @@ public interface MaintenanceJobsRepository extends JpaRepository<MaintenanceJobE
                     (COALESCE(MAX(m.odometer), 0) + mj.frequency) - c.odometer AS kmRemaining
                 FROM maintenance_jobs mj
                 JOIN cars c ON mj.car = c.id
-                LEFT JOIN performed_maintenance pm ON mj.id = pm.maintenance_job_id
+                LEFT JOIN performed_maintenance pm
+                    ON (mj.id = pm.maintenance_job_id)
+                    OR (mj.catalog_id IS NOT NULL AND mj.catalog_id = pm.catalog_id)
                 LEFT JOIN maintenance m ON pm.maintenance_id = m.id
                 WHERE c.id = :carId
-                GROUP BY mj.id, mj.name, mj.frequency, c.odometer
+                GROUP BY mj.id, mj.name, mj.frequency, mj.is_regular, c.odometer
                 ORDER BY kmRemaining ASC
             """, nativeQuery = true)
     List<NextMaintenanceView> findAllNextMaintenancesByCarId(@Param("carId") Integer carId);

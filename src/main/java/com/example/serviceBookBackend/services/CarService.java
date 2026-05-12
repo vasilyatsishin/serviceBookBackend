@@ -33,16 +33,15 @@ public class CarService {
     private final JWTService jWTService;
     private final UserRepository userRepository;
 
-    // Очищуємо список саме для цього юзера
-    @CacheEvict(value = CacheKeys.CARS_LIST, key = "#root.target.currentUserId")
+    @CacheEvict(value = CacheKeys.CARS_LIST, allEntries = true)
     public void addCar(CarCreateDTO car) throws IOException {
         Integer userId = jWTService.getCurrentUserId();
+        String role = jWTService.getCurrentUserRole();
 
         if (car.getPhoto() == null) {
             throw new RuntimeException("Фото обовʼязкове");
         }
 
-        // Стиснення фото (код залишаємо без змін)
         byte[] photoBytes = car.getPhoto().getBytes();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         Thumbnails.of(new ByteArrayInputStream(photoBytes))
@@ -51,7 +50,11 @@ public class CarService {
                 .outputQuality(0.75)
                 .toOutputStream(outputStream);
 
-        UserEntity user = userRepository.findReferenceById(userId);
+        Integer targetUserId = ("service".equals(role) && car.getOwnerId() != null)
+                ? car.getOwnerId()
+                : userId;
+
+        UserEntity user = userRepository.findReferenceById(targetUserId);
 
         CarEntity carEntity = new CarEntity();
         carEntity.setName(car.getName());
@@ -116,12 +119,13 @@ public class CarService {
     })
     public String updateOdometer(Integer carId, Integer newOdometer) {
         Integer userId = jWTService.getCurrentUserId();
+        String role = jWTService.getCurrentUserRole();
 
-        // Знаходимо машину і перевіряємо власника
         CarEntity car = carRepository.findById(carId)
                 .orElseThrow(() -> new ResourceNotFoundException("Автомобіль не знайдено"));
 
-        if (!car.getUser().getId().equals(userId)) {
+        boolean isService = "service".equals(role);
+        if (!isService && !car.getUser().getId().equals(userId)) {
             throw new CustomException("Доступ заборонено", HttpStatus.FORBIDDEN);
         }
 
@@ -164,16 +168,17 @@ public class CarService {
     @Cacheable(value = CacheKeys.CAR_BY_ID, key = "#id")
     public CarResponseDTO getCarById(Integer id) {
         Integer userId = jWTService.getCurrentUserId();
+        String role = jWTService.getCurrentUserRole();
 
         CarEntity car = carRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Автомобіль не знайдено"));
 
-        // Перевірка власності (якщо це не публічне фото)
-        if (!car.getUser().getId().equals(userId)) {
+        boolean isService = "service".equals(role);
+        if (!isService && !car.getUser().getId().equals(userId)) {
             throw new CustomException("Доступ заборонено", HttpStatus.FORBIDDEN);
         }
 
-        return convertToDTO(car);
+        return isService ? convertToDTOWithOwner(car) : convertToDTO(car);
     }
 
     // Допоміжний метод для отримання ID в анотаціях кешу
@@ -191,12 +196,27 @@ public class CarService {
         }
     }
 
+    public List<CarResponseDTO> getAllCars() {
+        return carRepository.findAll().stream()
+                .map(this::convertToDTOWithOwner)
+                .collect(Collectors.toList());
+    }
+
     private CarResponseDTO convertToDTO(CarEntity car) {
         CarResponseDTO dto = new CarResponseDTO();
         dto.setId(car.getId());
         dto.setName(car.getName());
         dto.setOdometer(car.getOdometer());
         dto.setPhotoUrl("/api/cars/" + car.getId() + "/photo");
+        return dto;
+    }
+
+    private CarResponseDTO convertToDTOWithOwner(CarEntity car) {
+        CarResponseDTO dto = convertToDTO(car);
+        if (car.getUser() != null) {
+            dto.setOwnerName(car.getUser().getName());
+            dto.setOwnerId(car.getUser().getId());
+        }
         return dto;
     }
 }
