@@ -43,6 +43,7 @@ public class AuthService {
         newUser.setName(user.getName());
         newUser.setEmail(user.getEmail());
         newUser.setPassword(encodedPassword);
+        newUser.setRole("owner");
         userRepository.save(newUser);
 
         String access = jwtService.generateAccessToken(newUser.getId(), newUser.getRole());
