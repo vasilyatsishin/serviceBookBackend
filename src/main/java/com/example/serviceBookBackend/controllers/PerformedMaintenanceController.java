@@ -1,5 +1,6 @@
 package com.example.serviceBookBackend.controllers;
 
+import com.example.serviceBookBackend.dto.MaintenanceDetailsResponseDTO;
 import com.example.serviceBookBackend.dto.PerformedMaintenanceCreateDTO;
 import com.example.serviceBookBackend.dto.PerformedMaintenancesResponseDTO;
 import com.example.serviceBookBackend.services.PerformedMaintenanceService;
@@ -31,6 +32,12 @@ public class PerformedMaintenanceController {
         List<PerformedMaintenancesResponseDTO> performedMaintenances = performedMaintenanceService.getPerformedMaintenances(carId);
         return ResponseEntity.ok()
                 .body(performedMaintenances);
+    }
+
+    @GetMapping("/{maintenanceId}/details")
+    public ResponseEntity<MaintenanceDetailsResponseDTO> getMaintenanceDetails(@PathVariable Integer maintenanceId) {
+        log.info("Received request to get details for maintenance {}", maintenanceId);
+        return ResponseEntity.ok(performedMaintenanceService.getMaintenanceDetails(maintenanceId));
     }
 
     @PostMapping("/{maintenanceId}/pay")

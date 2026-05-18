@@ -1,5 +1,7 @@
 package com.example.serviceBookBackend.services;
 
+import com.example.serviceBookBackend.dto.MaintenanceDetailsItemDTO;
+import com.example.serviceBookBackend.dto.MaintenanceDetailsResponseDTO;
 import com.example.serviceBookBackend.dto.PerformedMaintenanceCreateDTO;
 import com.example.serviceBookBackend.dto.PerformedMaintenancesResponseDTO;
 import com.example.serviceBookBackend.entity.CarEntity;
@@ -93,6 +95,18 @@ public class PerformedMaintenanceService {
         performedMaintenanceRepository.save(entity);
         log.info("Maintenance {} marked as paid", maintenanceId);
         return "Оплату успішно здійснено";
+    }
+
+    public MaintenanceDetailsResponseDTO getMaintenanceDetails(int maintenanceId) {
+        List<PerformedMaintenanceJobLink> links = linkRepository.findByPerformedMaintenanceEntityId(maintenanceId);
+        List<MaintenanceDetailsItemDTO> works = links.stream()
+                .filter(link -> link.getCatalogEntity() != null)
+                .map(link -> new MaintenanceDetailsItemDTO(
+                        link.getCatalogEntity().getName(),
+                        link.getCatalogEntity().getPrice()))
+                .toList();
+        double total = works.stream().mapToDouble(MaintenanceDetailsItemDTO::getPrice).sum();
+        return new MaintenanceDetailsResponseDTO(works, total);
     }
 
     @Cacheable(value = CacheKeys.MAINTENANCE_LIST, key = "#carId")
